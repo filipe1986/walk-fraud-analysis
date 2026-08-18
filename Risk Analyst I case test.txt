@@ -1,0 +1,16 @@
+Risk Analyst I - case test
+
+first part: daily work
+
+second part: how the payment industry works
+
+They want I give them innovative solutions.
+
+STEPS:
+
+1. Analyze the provided data
+1.1 Identify suspicious behaviors in the transactions;
+1.2 Explain:
+	a) what you found;
+	b) what led you to this conclusion;
+	c) what actions you would take.
