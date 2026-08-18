@@ -92,7 +92,7 @@ Name: count, dtype: int64
 
 # Let's look at the user, device and cards used for these impossibly fast transactions
 
-#print(fast_transactions[['user_id', 'device_id', 'card_number', 'has_cbk']])
+print(fast_transactions[['user_id', 'device_id', 'card_number', 'has_cbk']])
 
 '''
 Inspecting the bots (fast transactions): 
