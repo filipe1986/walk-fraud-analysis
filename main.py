@@ -1,9 +1,16 @@
+# ====================================================================
+# HEADER
+# ====================================================================
+# This is a Risk Fraud Analysis case project. Here we will show some options to detect and prevent Fraud operations. At the final we will show an script that can be used to automate this type of analysis.
+
+
+# ====================================================================
+# DATA LOADING
+# ====================================================================
+
 import pandas as pd
-
 url = 'https://gist.githubusercontent.com/cloudwalk-tests/76993838e65d7e0f988f40f1b1909c97/raw/295d9f7cb8fdf08f3cb3bdf1696ab245d5b5c1c9/transactional-sample.csv'
-
 df = pd.read_csv(url)
-
 df['transaction_date'] = pd.to_datetime(df['transaction_date']) # making the transaction_date a proper type
 
 """
@@ -30,7 +37,6 @@ transaction_id  merchant_id  user_id       card_number           transaction_dat
 '''
 
 # Let's oder by user_id so we can check if the same user is testing different cards
-
 df_sorted = df.sort_values(by=['user_id', 'transaction_date'])
 #print(df_sorted[['user_id', 'transaction_date']].head(15))
 '''
@@ -51,6 +57,10 @@ df_sorted = df.sort_values(by=['user_id', 'transaction_date'])
 3123      266 2019-11-03 20:25:23.212894
 2796      276 2019-11-11 15:53:21.076379
 '''
+
+# ====================================================================
+# 1. VELOCITY ANALYSIS – transactions under 60 / 120 seconds
+# ====================================================================
 
 # Checking the time difference between transactions for the same user
 
@@ -76,9 +86,7 @@ False    9
 True     9
 Name: count, dtype: int64
 '''
-
 # checking for transactions between 60 and 120 seconds
-
 medium_fast_transactions = df_sorted[(df_sorted['seconds_since_last'] >= 60) & (df_sorted['seconds_since_last'] <= 120)]
 
 # checking the chargeback summary for this bucket
@@ -121,6 +129,11 @@ Here we have fast operations. Looks like users 75710 and 77959 are trying to ext
 device_id missing (NaN) is a strong signal that an API is being used, because automated scripts don't generate device fingerprints like a regular web browsers or mobile phones do.
 '''
 
+# ====================================================================
+# 2. Missing Device ID
+# ====================================================================
+
+
 # Filtering the entire dataset for rows where device_id is missing (NaN)
 
 missing_device_data = df_sorted[df_sorted['device_id'].isna()]
@@ -135,6 +148,10 @@ False    763
 True      67
 Name: count, dtype: int64
 '''
+
+# ====================================================================
+# 3. High transaction amounts
+# ====================================================================
 
 # global high amounts: checking transactions in the top 5% of all spending
 high_amount_threshold = df_sorted['transaction_amount'].quantile(0.95)
@@ -152,6 +169,10 @@ Name: count, dtype: int64
 # here we have around 38% fraud rate
 # Looks like when a fraudsters get a working card, they try to cash out massive amounts before the bank catches on.
 ''' 
+
+# ====================================================================
+# 4. Combined Signals
+# ====================================================================
 
 # Behavioral Spikes: Checking transactions that are 3x larger than the user's personal average
 # Using .transform('mean') neatly to assign the user's average back to each of their transaction rows
@@ -175,8 +196,8 @@ Name: count, dtype: int64
 # Combining signals: Missing Device ID and Amount over 2000
 combined_risk = df_sorted[(df_sorted['device_id'].isna()) & (df_sorted['transaction_amount'] > 2000)]
 
-print("\nChargebacks for Ghosts making Large Purchases (>2000):")
-print(combined_risk['has_cbk'].value_counts())
+#print("\nChargebacks for Ghosts making Large Purchases (>2000):")
+#print(combined_risk['has_cbk'].value_counts())
 '''
 Chargebacks for Ghosts making Large Purchases (>2000):
 has_cbk
@@ -185,8 +206,56 @@ True     27
 Name: count, dtype: int64
 ''' # fraud rate here: about 23%. The problem here is: while we stopt 27 fraudsters we would, also, block 90 good custmomers who are trying to spend over $2,000 each one!
 
+# ====================================================================
+# 5. Risk Score
+# ====================================================================
+
 # We are going to use a Risk Scoring to block only those transactions, that cross a very specific point threshold. These blocked transactions may being analised manually.
 
+df_sorted['risk_score'] = 0
 
+# role n°1: 100 points for velocity (under 60 secondsd)
+is_fast = df_sorted['seconds_since_last'] < 60
+df_sorted.loc[is_fast, 'risk_score'] += 100
+
+# role n° 2: 30 points for missing Device ID
+is_ghost = df_sorted['device_id'].isna()
+df_sorted.loc[is_ghost, 'risk_score'] += 30
+
+# role n° 3: 20 points for global high amount
+is_high_value = df_sorted['transaction_amount'] > high_amount_threshold
+df_sorted.loc[is_high_value, 'risk_score'] += 20
+
+# sorting the dataset by the highest risk score to see our most dangerous transactions
+high_risk_transactions = df_sorted.sort_values(by='risk_score', ascending=False)
+
+#print("\nTop 10 Highest Risk Transactions:")
+#print(high_risk_transactions[['user_id', 'transaction_amount', 'risk_score', 'has_cbk']].head(10))
+'''
+Top 10 Highest Risk Transactions:
+      user_id  transaction_amount  risk_score  has_cbk
+2791    49106             4043.43         150    False
+2943    42677              301.58         130     True
+3140    76819             1038.47         130     True
+3102    16781              502.16         130     True
+3123      266              235.70         130    False
+2931    75710              254.37         130     True
+2929    75710              599.13         130     True
+1484    67903              300.86         100    False
+147     90176              582.63         100     True
+964     10378              553.66         100     True
+(.venv) filipe@data-analytics:~/Documents/cloud_walk$ 
+'''
+# ====================================================================
+# 6. Exporting to CSV
+# ====================================================================
+
+# filtering transactions that hits the threshold (Score >= 100)
+flagged_transactions = df_sorted[df_sorted['risk_score'] >= 100]
+
+# Exporting to a CSV file (index=False prevents pandas from writing the row numbers)
+flagged_transactions.to_csv('high_risk_alerts.csv', index=False)
+
+print(f"\nSuccess! Exported {len(flagged_transactions)} high-risk transactions to 'high_risk_alerts.csv'")
 
 
