@@ -32,7 +32,7 @@ transaction_id  merchant_id  user_id       card_number           transaction_dat
 # Let's oder by user_id so we can check if the same user is testing different cards
 
 df_sorted = df.sort_values(by=['user_id', 'transaction_date'])
-
+#print(df_sorted[['user_id', 'transaction_date']].head(15))
 '''
       user_id           transaction_date
 11          6 2019-12-01 20:44:48.109011
@@ -56,7 +56,7 @@ df_sorted = df.sort_values(by=['user_id', 'transaction_date'])
 
 df_sorted['time_delta'] = df_sorted.groupby('user_id')['transaction_date'].diff()
 
-user_266_data = df_sorted[df_sorted['user_id'] == 266]
+user_266_data = df_sorted[df_sorted['user_id'] == 266] # checking a specific and suspicious user
 '''
 user_id           transaction_date             time_delta
 3124      266 2019-11-03 20:24:50.039652                    NaT
@@ -92,7 +92,7 @@ Name: count, dtype: int64
 
 # Let's look at the user, device and cards used for these impossibly fast transactions
 
-print(fast_transactions[['user_id', 'device_id', 'card_number', 'has_cbk']])
+#print(fast_transactions[['user_id', 'device_id', 'card_number', 'has_cbk']])
 
 '''
 Inspecting the bots (fast transactions): 
@@ -118,6 +118,46 @@ Inspecting the bots (fast transactions):
 
 Here we have fast operations. Looks like users 75710 and 77959 are trying to extract money before the bank's automated system locks the card.
 
-Device id missing is a strong signal that an API is being used 
+device_id missing (NaN) is a strong signal that an API is being used, because automated scripts don't generate device fingerprints like a regular web browsers or mobile phones do.
 '''
+
+# Filtering the entire dataset for rows where device_id is missing (NaN)
+
+missing_device_data = df_sorted[df_sorted['device_id'].isna()]
+
+# Checking the total amount of normal vs fraud transactions for these ghost devices
+
+#print(missing_device_data['has_cbk'].value_counts())
+'''
+Chargebacks for missing device ids (ghosts devices):
+has_cbk
+False    763
+True      67
+Name: count, dtype: int64
+'''
+
+# global high amounts: checking transactions in the top 5% of all spending
+high_amount_threshold = df_sorted['transaction_amount'].quantile(0.95)
+global_high_amounts = df_sorted[df_sorted['transaction_amount'] > high_amount_threshold]
+
+#print(f"\nChargebacks for Global High Amounts (Top 5% over {high_amount_threshold:.2f}):")
+#print(global_high_amounts['has_cbk'].value_counts())
+'''
+Chargebacks for Global High Amounts (Top 5% over 2775.27):
+has_cbk
+False    98
+True     62
+Name: count, dtype: int64
+'''
+
+# Behavioral Spikes: Checking transactions that are 3x larger than the user's personal average
+# Using .transform('mean') neatly to assign the user's average back to each of their transaction rows
+df_sorted['user_avg_amount'] = df_sorted.groupby('user_id')['transaction_amount'].transform('mean')
+
+# Flaging transactions that spike 3x higher than the user's norm
+df_sorted['is_spike'] = df_sorted['transaction_amount'] > (df_sorted['user_avg_amount'] * 3)
+user_spikes = df_sorted[df_sorted['is_spike']]
+
+print("\nChargebacks for Sudden Spikes (3x higher than user average):")
+print(user_spikes['has_cbk'].value_counts())
 
