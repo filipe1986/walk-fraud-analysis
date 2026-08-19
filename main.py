@@ -147,8 +147,11 @@ Chargebacks for Global High Amounts (Top 5% over 2775.27):
 has_cbk
 False    98
 True     62
-Name: count, dtype: int64
-'''
+Name: count, dtype: int64 
+
+# here we have around 38% fraud rate
+# Looks like when a fraudsters get a working card, they try to cash out massive amounts before the bank catches on.
+''' 
 
 # Behavioral Spikes: Checking transactions that are 3x larger than the user's personal average
 # Using .transform('mean') neatly to assign the user's average back to each of their transaction rows
@@ -158,6 +161,32 @@ df_sorted['user_avg_amount'] = df_sorted.groupby('user_id')['transaction_amount'
 df_sorted['is_spike'] = df_sorted['transaction_amount'] > (df_sorted['user_avg_amount'] * 3)
 user_spikes = df_sorted[df_sorted['is_spike']]
 
-print("\nChargebacks for Sudden Spikes (3x higher than user average):")
-print(user_spikes['has_cbk'].value_counts())
+#print(user_spikes['has_cbk'].value_counts())
+'''
+Chargebacks for Sudden Spikes (3x higher than user average):
+has_cbk
+True     1
+False    1
+Name: count, dtype: int64
+
+''' # most users in this dataset only have 1 or 2 transacions on record; for those who have only one recorded transaction, it is impossible to have another that is 3x higher.
+
+
+# Combining signals: Missing Device ID and Amount over 2000
+combined_risk = df_sorted[(df_sorted['device_id'].isna()) & (df_sorted['transaction_amount'] > 2000)]
+
+print("\nChargebacks for Ghosts making Large Purchases (>2000):")
+print(combined_risk['has_cbk'].value_counts())
+'''
+Chargebacks for Ghosts making Large Purchases (>2000):
+has_cbk
+False    90
+True     27
+Name: count, dtype: int64
+''' # fraud rate here: about 23%. The problem here is: while we stopt 27 fraudsters we would, also, block 90 good custmomers who are trying to spend over $2,000 each one!
+
+# We are going to use a Risk Scoring to block only those transactions, that cross a very specific point threshold. These blocked transactions may being analised manually.
+
+
+
 
