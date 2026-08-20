@@ -306,10 +306,32 @@ These measures together should reduce chargebacks while keeping a good experienc
 # ============================================================
 # Propose a solution (conceptual or technical) that could support fraud detection or prevention
 
+'''
+My proposal is a simple but effective Risk Scoring system combined with a manual review queue.
 
+How it works:
 
+1. Every new transaction receives points based on risk signals:
+   a) + 100 points if the same user made another transaction in less than 60 seconds
+   b) + 30 points if the device_id is missing (ghost device)
+   c) + 20 points if the amount is in the top 5% of all transactions
+   d) (In the future we can add more rules: different IP, unusual location, high-risk merchant category, etc.)
 
+2. After calculating the score we define actions:
+   i) Score < 50: Approve automatically
+   ii) Score between 50 and 99: Approve but monitor
+   iii) Score >= 100: Send to a manual review queue (or soft decline + ask for extra verification)
 
+3. The transactions that go to the manual review queue are analyzed by a risk analyst. This protects good customers and still stops a good part of the fraud.
+
+Why this solution is good:
+* It is flexible (we can easily change the points or the threshold);
+* It reduces false positives compared to hard rules;
+* It is easy to explain to the business team;
+* We can start simple (only with the 3 rules I already tested) and improve it over time with more data.
+
+This kind of system is very common in the payments industry and can be implemented with simple code first, and later evolved into a more advanced machine learning model if needed.
+'''
 
 # ============================================================
 # 2.1.5 Present your results
