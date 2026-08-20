@@ -432,11 +432,23 @@ c) The Payment Gateway is always in the information flow (at the beginning), but
 # 2.2.3 Explain what chargebacks are, how they differ from a cancellation and what is their connection with fraud in the acquiring world.
 # ===========================================================
 
+'''
+A chargeback is when the cardholder disputes a transaction with his bank (the Issuer) and asks the money back. The Issuer takes the money from the Acquirer and the Acquirer usually takes it from the Merchant. So the merchant loses the money and also pays a fee.
+
+It is different from a cancellation (or refund). A cancellation is when the merchant or the customer agrees to cancel the sale and the money is returned in a friendly way. In a chargeback, the merchant many times does not agree and still loses the money.
+
+In the acquiring world, chargebacks are strongly connected with fraud. When a fraudster uses a stolen card, the real cardholder later makes a chargeback. This is one of the biggest risks for the Acquirer and for the merchant, because they can lose a lot of money if the fraud rate is high.
+'''
+
 
 # ===========================================================
 # 2.2.4 What is an anti-fraud and how an acquirer uses it.
 # ===========================================================
 
+'''
+An anti-fraud is a system or tools that tries to detect and stop suspicious transactions before they become chargebacks.
 
+An acquirer uses anti-fraud in different ways. It analyzes every transaction in real time looking for risk signals (like velocity, missing device, high amount, strange location, etc). They can automatically approve, review or block the transaction according to the risk score. Also, it helps the acquirer to protect itself and the merchants from fraud losses and high chargeback rates.
 
-
+In short, the anti-fraud is one of the most important tools for an acquirer to keep the business healthy and avoid big financial losses.
+'''
