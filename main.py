@@ -245,12 +245,30 @@ The combined signal (missing device + amount over 2000) already shows a fraud ra
 
 Because of this, the best way is not a simple rule, but a Risk Scoring system. We give points for each risk signal and only block or send to manual review the transactions that pass a certain threshold. This way we can catch more fraudsters without hurting too much the good users.
 
-This is just the first analysis. With more data (like IP, location, time of the day, merchant category, etc) the scoring can become much better.
+
 '''
 
 # ============================================================
 # 2.1.2 Broaden your analysis
 # ============================================================
+# Beyond the provided spreadsheet, what other types of data would you consider relevant to detect potencial fraud patterns?
+'''
+I would consider relevant: IP, location, merchant category.
+
+IP Address: although VPN can block the real origin, it can help to signal if the same credit card is being used in different IP address in a short period of time.
+
+Location: it helps to detect impossible travels, like, if a card is used in a physical store in New York and then, in short period of time, used online from an IP address in Russia.
+
+Merchant category: Fraudsters usually do not steal cards to buy groceries, but, instead, electronics, gift cards, luxury goods or crypto coins.
+
+
+'''
+
+# ============================================================
+# 2.1.3 Provide recommendations
+# ============================================================
+# Based on your conclusions, what measures would you suggest to prevent fraud and/or chargebacks in the future?
+
 
 
 
