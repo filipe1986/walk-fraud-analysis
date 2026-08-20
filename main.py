@@ -245,5 +245,5 @@ Because of this, the best way is not a simple rule, but a Risk Scoring system. W
 This is just the first analysis. With more data (like IP, location, time of the day, merchant category, etc) the scoring can become much better.
 
 
-Filipe Alves Vieira
+name: Filipe Alves Vieira
 '''
