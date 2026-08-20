@@ -1,16 +1,9 @@
-# ====================================================================
-# HEADER
-# ====================================================================
-# This is a Risk Fraud Analysis case project. Here we will show some options to detect and prevent Fraud operations. At the final we will show an script that can be used to automate this type of analysis.
-
-
-# ====================================================================
-# DATA LOADING
-# ====================================================================
-
 import pandas as pd
+
 url = 'https://gist.githubusercontent.com/cloudwalk-tests/76993838e65d7e0f988f40f1b1909c97/raw/295d9f7cb8fdf08f3cb3bdf1696ab245d5b5c1c9/transactional-sample.csv'
+
 df = pd.read_csv(url)
+
 df['transaction_date'] = pd.to_datetime(df['transaction_date']) # making the transaction_date a proper type
 
 """
@@ -36,49 +29,35 @@ transaction_id  merchant_id  user_id       card_number           transaction_dat
 4        21320402        54075    64367  650487******6116 2019-12-01 21:30:53.347051               55.36   860232.0    False
 '''
 
+# ============================================================
+# 0. DATA PREPARATION
+# ============================================================
+
 # Let's oder by user_id so we can check if the same user is testing different cards
 df_sorted = df.sort_values(by=['user_id', 'transaction_date'])
-#print(df_sorted[['user_id', 'transaction_date']].head(15))
-'''
-      user_id           transaction_date
-11          6 2019-12-01 20:44:48.109011
-3197        7 2019-11-01 01:29:45.799767
-3198        8 2019-11-01 01:27:15.811098
-3189       19 2019-11-01 17:52:57.071163
-390       132 2019-11-30 10:36:29.122871
-555       136 2019-11-29 18:18:03.840585
-609       153 2019-11-29 16:21:44.370055
-1013      163 2019-11-28 13:00:17.797337
-2994      167 2019-11-07 22:02:33.150491
-29        184 2019-12-01 19:23:45.202875
-1621      208 2019-11-23 13:00:53.469234
-875       244 2019-11-28 19:08:12.611753
-3124      266 2019-11-03 20:24:50.039652
-3123      266 2019-11-03 20:25:23.212894
-2796      276 2019-11-11 15:53:21.076379
-'''
 
-# ====================================================================
-# 1. VELOCITY ANALYSIS – transactions under 60 / 120 seconds
-# ====================================================================
+
+# =================================================================
+# 1. VELOCITY ANALYSIS (time between transactions of the same user)
+# =================================================================
 
 # Checking the time difference between transactions for the same user
-
 df_sorted['time_delta'] = df_sorted.groupby('user_id')['transaction_date'].diff()
 
-user_266_data = df_sorted[df_sorted['user_id'] == 266] # checking a specific and suspicious user
+# checking a specific and suspicious user
+user_266_data = df_sorted[df_sorted['user_id'] == 266]
 '''
 user_id           transaction_date             time_delta
 3124      266 2019-11-03 20:24:50.039652                    NaT
 3123      266 2019-11-03 20:25:23.212894 0 days 00:00:33.173242
 '''
+
 # Converting the time difference into total seconds
 df_sorted['seconds_since_last'] = df_sorted['time_delta'].dt.total_seconds()
 
 # Let's filter the dataset to only keep transactions that happened within 60 seconds of a previous one
 fast_transactions = df_sorted[df_sorted['seconds_since_last'] < 60]
 
-# checking the chargeback summary for these rapid transactions
 '''
 Chargbacks for transactions under 60 seconds: 
 has_cbk
@@ -86,10 +65,10 @@ False    9
 True     9
 Name: count, dtype: int64
 '''
+
 # checking for transactions between 60 and 120 seconds
 medium_fast_transactions = df_sorted[(df_sorted['seconds_since_last'] >= 60) & (df_sorted['seconds_since_last'] <= 120)]
 
-# checking the chargeback summary for this bucket
 '''
 Chargebacks for transactions between 60 and 120 seconds: 
 has_cbk
@@ -98,10 +77,8 @@ True      9
 Name: count, dtype: int64
 '''
 
+
 # Let's look at the user, device and cards used for these impossibly fast transactions
-
-#print(fast_transactions[['user_id', 'device_id', 'card_number', 'has_cbk']])
-
 '''
 Inspecting the bots (fast transactions): 
       user_id  device_id       card_number  has_cbk
@@ -125,22 +102,15 @@ Inspecting the bots (fast transactions):
 1411    98739   422057.0  606282******2118    False
 
 Here we have fast operations. Looks like users 75710 and 77959 are trying to extract money before the bank's automated system locks the card.
-
 device_id missing (NaN) is a strong signal that an API is being used, because automated scripts don't generate device fingerprints like a regular web browsers or mobile phones do.
 '''
-
-# ====================================================================
-# 2. Missing Device ID
-# ====================================================================
-
+# ============================================================
+# 2. MISSING DEVICE_ID (GHOST DEVICES)
+# ============================================================
 
 # Filtering the entire dataset for rows where device_id is missing (NaN)
-
 missing_device_data = df_sorted[df_sorted['device_id'].isna()]
 
-# Checking the total amount of normal vs fraud transactions for these ghost devices
-
-#print(missing_device_data['has_cbk'].value_counts())
 '''
 Chargebacks for missing device ids (ghosts devices):
 has_cbk
@@ -149,16 +119,14 @@ True      67
 Name: count, dtype: int64
 '''
 
-# ====================================================================
-# 3. High transaction amounts
-# ====================================================================
+# ============================================================
+# 3. HIGH AMOUNT ANALYSIS
+# ============================================================
 
-# global high amounts: checking transactions in the top 5% of all spending
+# 3.1 Global high amounts: checking transactions in the top 5% of all spending
 high_amount_threshold = df_sorted['transaction_amount'].quantile(0.95)
 global_high_amounts = df_sorted[df_sorted['transaction_amount'] > high_amount_threshold]
 
-#print(f"\nChargebacks for Global High Amounts (Top 5% over {high_amount_threshold:.2f}):")
-#print(global_high_amounts['has_cbk'].value_counts())
 '''
 Chargebacks for Global High Amounts (Top 5% over 2775.27):
 has_cbk
@@ -168,13 +136,9 @@ Name: count, dtype: int64
 
 # here we have around 38% fraud rate
 # Looks like when a fraudsters get a working card, they try to cash out massive amounts before the bank catches on.
-''' 
+'''
 
-# ====================================================================
-# 4. Combined Signals
-# ====================================================================
-
-# Behavioral Spikes: Checking transactions that are 3x larger than the user's personal average
+# 3.2 Behavioral Spikes: Checking transactions that are 3x larger than the user's personal average
 # Using .transform('mean') neatly to assign the user's average back to each of their transaction rows
 df_sorted['user_avg_amount'] = df_sorted.groupby('user_id')['transaction_amount'].transform('mean')
 
@@ -182,7 +146,6 @@ df_sorted['user_avg_amount'] = df_sorted.groupby('user_id')['transaction_amount'
 df_sorted['is_spike'] = df_sorted['transaction_amount'] > (df_sorted['user_avg_amount'] * 3)
 user_spikes = df_sorted[df_sorted['is_spike']]
 
-#print(user_spikes['has_cbk'].value_counts())
 '''
 Chargebacks for Sudden Spikes (3x higher than user average):
 has_cbk
@@ -193,11 +156,16 @@ Name: count, dtype: int64
 ''' # most users in this dataset only have 1 or 2 transacions on record; for those who have only one recorded transaction, it is impossible to have another that is 3x higher.
 
 
+
+# ============================================================
+# 4. COMBINED RISK SIGNALS
+# ============================================================
+
 # Combining signals: Missing Device ID and Amount over 2000
 combined_risk = df_sorted[(df_sorted['device_id'].isna()) & (df_sorted['transaction_amount'] > 2000)]
 
-#print("\nChargebacks for Ghosts making Large Purchases (>2000):")
-#print(combined_risk['has_cbk'].value_counts())
+print("\nChargebacks for Ghosts making Large Purchases (>2000):")
+print(combined_risk['has_cbk'].value_counts())
 '''
 Chargebacks for Ghosts making Large Purchases (>2000):
 has_cbk
@@ -206,9 +174,9 @@ True     27
 Name: count, dtype: int64
 ''' # fraud rate here: about 23%. The problem here is: while we stopt 27 fraudsters we would, also, block 90 good custmomers who are trying to spend over $2,000 each one!
 
-# ====================================================================
-# 5. Risk Score
-# ====================================================================
+# ============================================================
+# 5. TOWARDS A PRACTICAL APPROACH – RISK SCORING
+# ============================================================
 
 # We are going to use a Risk Scoring to block only those transactions, that cross a very specific point threshold. These blocked transactions may being analised manually.
 
@@ -256,6 +224,26 @@ flagged_transactions = df_sorted[df_sorted['risk_score'] >= 100]
 # Exporting to a CSV file (index=False prevents pandas from writing the row numbers)
 flagged_transactions.to_csv('high_risk_alerts.csv', index=False)
 
-print(f"\nSuccess! Exported {len(flagged_transactions)} high-risk transactions to 'high_risk_alerts.csv'")
+#print(f"\nSuccess! Exported {len(flagged_transactions)} high-risk transactions to 'high_risk_alerts.csv'")
 
 
+# ============================================================
+# CONCLUSION
+# ============================================================
+
+'''
+After analyzing the data, we can see some clear patterns of suspicious behavior:
+
+- Very fast transactions (under 60-120 seconds) from the same user
+- Missing device_id (ghost devices), that looks a lot like automated scripts
+- High amounts, especially when combined with missing device
+
+The combined signal (missing device + amount over 2000) already shows a fraud rate around 23%. The problem is that if we just block all of them, we also stop many good customers.
+
+Because of this, the best way is not a simple rule, but a Risk Scoring system. We give points for each risk signal and only block or send to manual review the transactions that pass a certain threshold. This way we can catch more fraudsters without hurting too much the good users.
+
+This is just the first analysis. With more data (like IP, location, time of the day, merchant category, etc) the scoring can become much better.
+
+
+Filipe Alves Vieira
+'''
