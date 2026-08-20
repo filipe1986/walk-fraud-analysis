@@ -232,8 +232,9 @@ flagged_transactions.to_csv('high_risk_alerts.csv', index=False)
 
 #print(f"\nSuccess! Exported {len(flagged_transactions)} high-risk transactions to 'high_risk_alerts.csv'")
 
-
+# =================================================================================================
 # 2.1.1 b) Explain what you found, what led you to this conclusion and what  actions you would take.
+# =================================================================================================
 '''
 After analyzing the data, we can see some clear patterns of suspicious behavior:
 
@@ -268,6 +269,83 @@ Merchant category: Fraudsters usually do not steal cards to buy groceries, but, 
 # 2.1.3 Provide recommendations
 # ============================================================
 # Based on your conclusions, what measures would you suggest to prevent fraud and/or chargebacks in the future?
+
+
+'''
+Based on the patterns I found, these are the measures I would suggest:
+
+1. Implement a Risk Scoring system (like the one I started building)
+   - Give points for velocity (very fast transactions)
+   - Give points for missing device_id
+   - Give points for high amounts
+   - Only block or send to manual review the transactions that pass a high threshold
+   This way we catch more fraud without blocking too many good customers.
+
+2. Create velocity rules
+   - Limit the number of transactions a user can make in a short time (for example, more than 2 transactions in less than 2 minutes should be reviewed or blocked).
+
+3. Treat missing device_id as a strong risk signal
+   - Transactions without device_id should receive extra scrutiny, especially if the amount is high.
+
+4. Monitor high-value transactions more carefully
+   - Transactions above a certain amount (or in the top 5%) should have extra checks, mainly when combined with other risk signals.
+
+5. Add more data sources in the future
+   - IP address, geolocation and merchant category would make the risk score much stronger and reduce false positives.
+
+6. Create a small manual review queue
+   - The transactions that the score flags as high risk can go to a human analyst instead of being automatically blocked. This protects good customers and still stops a lot of fraud.
+
+These measures together should reduce chargebacks while keeping a good experience for normal users.
+'''
+
+
+
+# ============================================================
+# 2.1.4 Design an anti-fraud solution
+# ============================================================
+# Propose a solution (conceptual or technical) that could support fraud detection or prevention
+
+
+
+
+
+
+# ============================================================
+# 2.1.5 Present your results
+# ============================================================
+# a) Summarize your findings, reasoning and suggestions clearly;
+# b) You may use charts, tables, dashboards or any other tool to enrich your presentation.
+
+
+
+
+
+
+# ===========================================================
+# 2.2 Understand the Industry
+# ===========================================================
+
+# ===========================================================
+# 2.2.1 Explain briefly the money flow, the information flow and the role of the main players in the payment industry.
+# ===========================================================
+
+
+
+# ===========================================================
+# 2.2.2 Explain the main differences between acquirer, sub-acquirer and payment gateway, and how the flow explained in the previous question changes for these players.
+# ===========================================================
+
+
+
+# ===========================================================
+# 2.2.3 Explain what chargebacks are, how they differ from a cancellation and what is their connection with fraud in the acquiring world.
+# ===========================================================
+
+
+# ===========================================================
+# 2.2.4 What is an anti-fraud and how an acquirer uses it.
+# ===========================================================
 
 
 
