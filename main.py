@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 
 url = 'https://gist.githubusercontent.com/cloudwalk-tests/76993838e65d7e0f988f40f1b1909c97/raw/295d9f7cb8fdf08f3cb3bdf1696ab245d5b5c1c9/transactional-sample.csv'
 
@@ -170,8 +171,8 @@ Name: count, dtype: int64
 # Combining signals: Missing Device ID and Amount over 2000
 combined_risk = df_sorted[(df_sorted['device_id'].isna()) & (df_sorted['transaction_amount'] > 2000)]
 
-print("\nChargebacks for Ghosts making Large Purchases (>2000):")
-print(combined_risk['has_cbk'].value_counts())
+#print("\nChargebacks for Ghosts making Large Purchases (>2000):")
+#print(combined_risk['has_cbk'].value_counts())
 '''
 Chargebacks for Ghosts making Large Purchases (>2000):
 has_cbk
@@ -337,9 +338,46 @@ This kind of system is very common in the payments industry and can be implement
 # 2.1.5 Present your results
 # ============================================================
 # a) Summarize your findings, reasoning and suggestions clearly;
+
+'''
+a) 
+Main findings:
+i) Fast transactions (under 60-120 seconds) show high chargeback rate (~50%);
+ii) Missing device_id is a strong fraud signal;
+iii) High amounts (top 5%) have ~38% chargeback rate;
+iv) Combining missing device + high amount gives ~23% fraud rate, but also blocks many good customers.
+
+Reasoning:
+Simple hard rules creates too many false positives. A Risk Scoring system is better because it balances fraud prevention with customer experience.
+
+Suggestions:
+* To implement a Risk Scoring model (points for velocity, missing device and high amount);
+* To send only high-score transactions to manual review;
+* In the future, add IP, location and merchant category to improve accuracy.
+
+'''
+
 # b) You may use charts, tables, dashboards or any other tool to enrich your presentation.
 
+top10 = high_risk_transactions.head(10).copy() # getting the top 10 highest risk transactions
 
+# creating a label for the y-axis (user_id + amount)
+top10['label'] = top10['user_id'].astype(str) + ' | $' + top10['transaction_amount'].round(0).astype(int).astype(str)
+
+# colors: red for chargeback and green for no chargeback
+colors = ['#e74c3c' if x else '#2ecc71' for x in top10['has_cbk']]
+
+plt.figure(figsize=(10, 6))
+bars = plt.barh(top10['label'], top10['risk_score'], color=colors)
+
+plt.xlabel('Risk Score')
+plt.title('Top 10 Highest Risk Transactions\n(Red = chargeback | Green = no chargeback)')
+plt.gca().invert_yaxis() # putting the highest score on top
+plt.tight_layout()
+
+# saving the chart
+plt.savefig('top10_risk_score.png', dpi=150, bbox_inches='tight')
+#plt.show()
 
 
 
