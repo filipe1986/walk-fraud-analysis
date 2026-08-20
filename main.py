@@ -380,8 +380,6 @@ plt.savefig('top10_risk_score.png', dpi=150, bbox_inches='tight')
 #plt.show()
 
 
-
-
 # ===========================================================
 # 2.2 Understand the Industry
 # ===========================================================
@@ -390,12 +388,44 @@ plt.savefig('top10_risk_score.png', dpi=150, bbox_inches='tight')
 # 2.2.1 Explain briefly the money flow, the information flow and the role of the main players in the payment industry.
 # ===========================================================
 
+'''
+In the payment industry we have two different flows: the information flow and the money flow.
 
+Information flow (happens almost instantly):
+When the customer pays, the information of the transaction walks this path: from the merchant to the payment gateway, and to acquirer, and to card network (Visa/Mastercard) and finally to the issuer (the bank of the customer). The Issuer says yes or no, and the answer comes back the same way.
+
+Money flow (happens later, usually in 1 or 2 days):
+After the transaction is approved, the real money moves this path: from the issuer to the card network, to the acquirer and, finally, arrives in the merchant account.
+
+Main players:
+Cardholder: the person who has the card and makes the purchase.
+Merchant: the store or company that sells the product.
+Issuer: the bank that gave the card to the customer.
+Acquirer: the bank or company that receives the money for the merchant.
+Card Network (Visa, Mastercard, etc): the company that connects everyone and sets the rules.
+Payment Gateway: the technology that captures the card data securely (especially online).
+
+So the information travels fast for approval, but the real money takes a bit more time to settle.
+'''
 
 # ===========================================================
-# 2.2.2 Explain the main differences between acquirer, sub-acquirer and payment gateway, and how the flow explained in the previous question changes for these players.
+# 2.2.2 Explain the main differences between acquirer, sub-acquirer and payment gateway, and how the flow  - explained in the previous question - changes for these players.
 # ===========================================================
 
+'''
+The main differences are:
+
+Acquirer: is the bank or financial institution that has the contract with the merchant and is responsible to receive the money from the card networks and pay the merchant. It takes the financial risk.
+
+Sub-acquirer (or Payment Facilitator): is a company that works under an acquirer. It onboards many small merchants under its own account and makes the process easier and faster for them. The sub-acquirer receives the money first and then pays the merchants.
+
+Payment Gateway: is only the technology. It captures the card data, encrypts it and sends the information to the acquirer or sub-acquirer. The gateway does not touch the money, it only moves the information.
+
+How the flow changes:
+a) When the merchant uses only an Acquirer, the money goes: Issuer > Network > Acquirer > Merchant.
+b) When there is a Sub-acquirer, the money goes: Issuer > Network > Acquirer > Sub-acquirer > Merchant.
+c) The Payment Gateway is always in the information flow (at the beginning), but it never appears in the money flow.
+'''
 
 
 # ===========================================================
